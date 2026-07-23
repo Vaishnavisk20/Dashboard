@@ -175,7 +175,7 @@ async function serveStatic(req, res, url) {
   }
 }
 
-export const server = createServer(async (req, res) => {
+export async function handleRequest(req, res) {
   const requestId = crypto.randomUUID();
   const startedAt = Date.now();
   res.setHeader('x-request-id', requestId);
@@ -207,7 +207,9 @@ export const server = createServer(async (req, res) => {
       details: error.details || []
     });
   }
-});
+}
+
+export const server = createServer(handleRequest);
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   server.listen(PORT, () => {

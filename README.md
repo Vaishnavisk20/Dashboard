@@ -96,6 +96,26 @@ This repo includes `render.yaml` for Render Blueprint deployment.
 
 After deployment, open `/api/health` on the Render URL to confirm the backend is running.
 
+### Vercel Deployment
+
+This repo includes `vercel.json` and an `api/index.js` serverless adapter for Vercel.
+
+1. In Vercel, choose **Add New > Project**.
+2. Import `https://github.com/Vaishnavisk20/Dashboard`.
+3. Use the default framework setting or choose **Other**.
+4. Set environment variables:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_PROJECTS_TABLE=dashboard_projects`
+   - `SUPABASE_IMPORTS_TABLE=dashboard_imports`
+   - `SUPABASE_TIMEOUT_MS=10000`
+   - `MAX_REQUEST_BYTES=2097152`
+   - `BASIC_AUTH_USERNAME`
+   - `BASIC_AUTH_PASSWORD`
+5. Deploy.
+
+Vercel serves `public/` as the frontend and routes `/api/*` to the Node serverless adapter. Check `/api/health` after deployment.
+
 ## CSV Import
 
 The supplied CSV was copied to:
