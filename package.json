@@ -1,0 +1,15 @@
+{
+  "name": "project-delivery-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node src/server/cli.js import data/imports/projects-filtered-20260715-1505.csv --full",
+    "import:projects": "node src/server/cli.js import",
+    "dev": "node src/server/index.js",
+    "start": "node src/server/index.js",
+    "build": "node --check src/server/index.js && node --check src/server/cli.js && node --check src/shared/projectLogic.js && node --check public/app.js",
+    "test": "SUPABASE_DISABLED=1 node --test tests/*.test.js",
+    "lint": "node --check src/server/index.js && node --check public/app.js"
+  }
+}

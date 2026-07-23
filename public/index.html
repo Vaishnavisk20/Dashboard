@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project Delivery Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="shell-header">
+      <div class="brand-block">
+        <p class="eyebrow">Project Delivery</p>
+        <h1>Go-Live Forecasting Dashboard</h1>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <aside class="sidebar-nav" aria-label="Module navigation">
+        <div class="sidebar-brand">
+          <span class="brand-mark">PD</span>
+          <div>
+            <strong>Project Delivery</strong>
+            <span>Control center</span>
+          </div>
+        </div>
+        <p class="sidebar-label">Workspace</p>
+        <nav aria-label="Main navigation">
+          <a href="#overview" data-icon="▦">Overview</a>
+          <a href="#forecast" data-icon="◷">Go-Live Forecast</a>
+          <a href="#projects" data-icon="▤">Portfolios</a>
+          <a href="#capacity" data-icon="◉">IC Workload</a>
+          <a href="#imports" data-icon="+">Data Hub</a>
+        </nav>
+      </aside>
+
+      <main>
+      <section class="workspace-intro" aria-label="Dashboard summary">
+        <div>
+          <p class="eyebrow">Live workspace</p>
+          <h2>Monitor delivery health, ownership, capacity, and go-live timing from imported project data.</h2>
+        </div>
+      </section>
+
+      <section class="filter-bar" aria-label="Global filters">
+        <label>Search<input id="filter-search" type="search" placeholder="Portfolio or customer"></label>
+        <label>Status<select id="filter-status"><option value="">All</option></select></label>
+        <label>Tier<select id="filter-tier"><option value="">All</option></select></label>
+        <label>IC<select id="filter-effectiveIC"><option value="">All</option></select></label>
+        <label>Competency<select id="filter-competency"><option value="">All</option></select></label>
+        <button id="reset-filters" type="button">Clear</button>
+        <button id="export-projects" type="button">Export CSV</button>
+      </section>
+      <div id="active-filter-summary" class="active-filter-summary" hidden></div>
+
+      <section id="overview" class="page-section">
+        <div class="section-heading">
+          <div class="heading-copy">
+            <p class="eyebrow">Overview</p>
+            <h2>Delivery Portfolio</h2>
+            <p class="section-subtitle">KPI counts, chart segments, and drawer records are calculated from stored backend records.</p>
+            <p id="portfolio-source-note" class="data-note"></p>
+          </div>
+          <p id="last-refresh" class="muted"></p>
+        </div>
+        <div id="kpi-grid" class="kpi-grid" aria-live="polite"></div>
+        <article class="panel chart-card overview-distribution-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 id="overview-chart-title">Portfolio Insight</h3>
+              <p class="muted">Choose a view to generate the chart.</p>
+            </div>
+            <div class="chart-controls">
+              <div class="checkbox-dropdown" id="overview-attribute">
+                <span class="control-label">Insight View</span>
+                <details>
+                  <summary id="overview-attribute-summary">Choose insights</summary>
+                  <div class="checkbox-menu">
+                    <label><input type="checkbox" value="status"> Delivery Stage</label>
+                    <label><input type="checkbox" value="competency"> Competency Mix</label>
+                    <label><input type="checkbox" value="customerTier"> Customer Tier Mix</label>
+                    <label><input type="checkbox" value="integrationType"> Integration Mix</label>
+                    <label><input type="checkbox" value="effectiveIC"> IC Ownership</label>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+          <div id="overview-dynamic-chart"></div>
+        </article>
+      </section>
+
+      <section id="forecast" class="page-section">
+        <div class="section-heading">
+          <div class="heading-copy">
+            <p class="eyebrow">Go-Live Forecast</p>
+            <h2>Date Range Forecast</h2>
+            <p class="section-subtitle">Review go-live timing across a selected from and to date range.</p>
+          </div>
+          <div class="date-controls">
+            <label>From date<input id="forecast-from" type="date"></label>
+            <label>To date<input id="forecast-to" type="date"></label>
+          </div>
+        </div>
+        <div id="forecast-kpis" class="kpi-grid small"></div>
+        <p class="forecast-rule-note">Delayed counts portfolios in the selected range whose forecasted go-live date is before today and whose status is not Go Live Completed, Closed, or Live.</p>
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="all">All</button>
+          <button class="tab" data-tab="forecasted">Forecasted</button>
+          <button class="tab" data-tab="delayed">Delayed</button>
+        </div>
+        <div class="table-wrap"><table id="forecast-table"></table></div>
+      </section>
+
+      <section id="projects" class="page-section">
+        <div class="section-heading">
+          <div class="heading-copy">
+            <p class="eyebrow">Portfolios</p>
+            <h2>Server-Driven Portfolio Records</h2>
+            <p class="section-subtitle">Every portfolio row includes Competency, IC, and Secondary IC. If IC is blank, Secondary IC fills the IC position.</p>
+          </div>
+          <button id="add-portfolio" type="button">Add Portfolio</button>
+        </div>
+        <div class="table-wrap"><table id="projects-table"></table></div>
+      </section>
+
+      <section id="capacity" class="page-section">
+        <div class="section-heading">
+          <div class="heading-copy">
+            <p class="eyebrow">IC Workload</p>
+            <h2>Consultant Workload</h2>
+            <p class="section-subtitle">Active portfolio load by implementation consultant.</p>
+          </div>
+        </div>
+        <div class="table-wrap capacity-table-wrap"><table id="capacity-table"></table></div>
+      </section>
+
+      <section id="imports" class="page-section">
+        <div class="section-heading">
+          <div class="heading-copy"><p class="eyebrow">Data Hub</p><h2>CSV Intake Center</h2><p class="section-subtitle">Upload a customer CSV, preview validation results, then confirm the update. Clear data is separated to avoid accidental clicks.</p></div>
+          <button id="clear-data" class="danger-button" type="button">Clear Data</button>
+        </div>
+        <form id="import-form" class="import-panel">
+          <label class="file-drop">CSV file<input id="import-file" type="file" accept=".csv,text/csv"></label>
+          <label>Mode<select id="import-mode"><option value="incremental">Incremental update</option><option value="full">Full replacement snapshot</option></select></label>
+          <button type="submit">Preview Import</button>
+          <button id="confirm-import" type="button" disabled>Confirm Import</button>
+          <button id="reset-sample" class="secondary-button" type="button">Load Sample CSV</button>
+        </form>
+        <pre id="import-result" class="result-box"></pre>
+      </section>
+
+      <section id="settings" class="page-section">
+        <div class="section-heading"><div class="heading-copy"><p class="eyebrow">Settings</p><h2>Configuration</h2><p class="section-subtitle">Forecast and capacity rules live in backend services.</p></div></div>
+        <form id="settings-form" class="settings-grid">
+          <article class="panel">
+            <h3>Forecast Rules</h3>
+            <label>Risk warning threshold<input id="setting-risk-watch" type="number" min="0" max="100" value="25"></label>
+            <label>At-risk threshold<input id="setting-risk-high" type="number" min="0" max="100" value="50"></label>
+            <label>Critical threshold<input id="setting-risk-critical" type="number" min="0" max="100" value="75"></label>
+          </article>
+          <article class="panel">
+            <h3>Capacity Rules</h3>
+            <label>Balanced limit<input id="setting-cap-balanced" type="number" min="0" value="15"></label>
+            <label>High workload limit<input id="setting-cap-high" type="number" min="0" value="20"></label>
+            <label>Default page size<input id="setting-page-size" type="number" min="5" max="50" value="10"></label>
+          </article>
+          <article class="panel wide-settings">
+            <h3>Workspace Preferences</h3>
+            <label><input id="setting-show-source" type="checkbox" checked> Show import row summary on Overview</label>
+            <div class="settings-actions">
+              <button type="submit">Save Settings</button>
+              <button id="settings-reset" class="secondary-button" type="button">Reset Settings</button>
+              <span id="settings-status" class="muted"></span>
+            </div>
+          </article>
+        </form>
+      </section>
+      </main>
+    </div>
+
+    <aside id="drawer" class="drawer" aria-hidden="true">
+      <div class="drawer-header">
+        <div><p class="eyebrow" id="drawer-kicker">Details</p><h2 id="drawer-title">Portfolios</h2></div>
+        <button id="drawer-close" aria-label="Close drawer" type="button">Close</button>
+      </div>
+      <input id="drawer-search" type="search" placeholder="Search drawer records">
+      <div class="table-wrap"><table id="drawer-table"></table></div>
+    </aside>
+
+    <div id="portfolio-modal" class="modal" hidden>
+      <form id="portfolio-form" class="modal-panel">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow" id="portfolio-form-kicker">Portfolio</p>
+            <h2 id="portfolio-form-title">Add Portfolio</h2>
+          </div>
+          <button id="portfolio-form-close" type="button" aria-label="Close portfolio form">Close</button>
+        </div>
+        <input id="portfolio-id" name="id" type="hidden">
+        <div class="form-grid">
+          <label>Portfolio<input name="projectName" required></label>
+          <label>Customer<input name="customerName" required></label>
+          <label>Tier<input name="customerTier"></label>
+          <label>Status<input name="projectStatus"></label>
+          <label>Competency<input name="competency"></label>
+          <label>IC<input name="primaryIC"></label>
+          <label>Secondary IC<input name="secondaryIC"></label>
+          <label>IC Lead<input name="icLead"></label>
+          <label>Station<input name="stationName"></label>
+          <label>Forecasted Go-Live<input name="estimatedGoLiveDate" type="date"></label>
+          <label>Integration<input name="integrationType"></label>
+          <label>Template<input name="templateName"></label>
+          <label>Use Case<input name="useCase"></label>
+          <label class="full-field">Comment<textarea name="comment" rows="4"></textarea></label>
+        </div>
+        <p id="portfolio-form-status" class="muted" aria-live="polite"></p>
+        <div class="modal-actions">
+          <button id="portfolio-form-cancel" class="secondary-button" type="button">Cancel</button>
+          <button type="submit">Save Portfolio</button>
+        </div>
+      </form>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
