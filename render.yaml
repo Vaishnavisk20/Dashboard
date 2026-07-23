@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: project-delivery-dashboard
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_PROJECTS_TABLE
+        value: dashboard_projects
+      - key: SUPABASE_IMPORTS_TABLE
+        value: dashboard_imports
+      - key: SUPABASE_TIMEOUT_MS
+        value: "10000"
+      - key: MAX_REQUEST_BYTES
+        value: "2097152"
+      - key: BASIC_AUTH_USERNAME
+        sync: false
+      - key: BASIC_AUTH_PASSWORD
+        sync: false

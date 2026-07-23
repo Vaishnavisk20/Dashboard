@@ -79,6 +79,23 @@ npm start
 
 The health endpoint is intentionally unauthenticated so hosting platforms can monitor it. All other routes are protected when both Basic Auth variables are set.
 
+### Render Deployment
+
+This repo includes `render.yaml` for Render Blueprint deployment.
+
+1. Push the repo to GitHub.
+2. In Render, choose **New > Blueprint**.
+3. Connect `https://github.com/Vaishnavisk20/Dashboard`.
+4. Render will read `render.yaml`.
+5. Add the secret values when prompted:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `BASIC_AUTH_USERNAME`
+   - `BASIC_AUTH_PASSWORD`
+6. Deploy.
+
+After deployment, open `/api/health` on the Render URL to confirm the backend is running.
+
 ## CSV Import
 
 The supplied CSV was copied to:
