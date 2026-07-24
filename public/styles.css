@@ -1032,7 +1032,7 @@ tr:hover { background: #f3f7ff; }
   gap: 10px;
 }
 .badge { display: inline-block; padding: 4px 9px; border-radius: 999px; font-weight: 800; font-size: 11px; background: #f2f4f7; color: #475467; white-space: nowrap; }
-.badge.Critical, .badge.At-Risk { color: var(--risk); background: #fee4e2; }
+.badge.Critical, .badge.At-Risk, .badge.Closed { color: var(--risk); background: #fee4e2; }
 .badge.Watch { color: var(--warn); background: #fef0c7; }
 .badge.On-Track { color: var(--accent); background: #eaf2ff; border: 1px solid #b9d7ff; }
 .badge.Platinum { color: var(--violet); background: #f4f3ff; border: 1px solid #d9d6fe; }
@@ -1047,7 +1047,7 @@ tr:hover { background: #f3f7ff; }
 .badge.On-Hold { color: #b45309; background: #fef3c7; border: 1px solid #fde68a; }
 .badge.Awaiting-Go-Live { color: #be123c; background: #ffe4e6; border: 1px solid #fecdd3; }
 .badge.Customer-Signed-Off { color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; }
-.badge.Live, .badge.Closed, .badge.Go-Live-Completed { color: var(--ok); background: #d1fadf; }
+.badge.Live, .badge.Go-Live-Completed { color: var(--ok); background: #d1fadf; }
 .badge.High, .badge.Overloaded { color: var(--risk); background: #fee4e2; }
 .badge.Balanced, .badge.Available { color: var(--ok); background: #d1fadf; }
 

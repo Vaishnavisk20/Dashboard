@@ -91,6 +91,50 @@ export function classifyHealth(score) {
   return 'Critical';
 }
 
+function evaluateForecastRisk(project, now = new Date()) {
+  let score = 0;
+  const reasons = [];
+  const status = clean(project.projectStatus);
+  const forecastedDate = project.estimatedGoLiveDate || project.currentPlannedGoLiveDate;
+  const until = daysUntil(forecastedDate, now);
+
+  const add = (points, reason) => {
+    score += points;
+    reasons.push(reason);
+  };
+
+  if (!forecastedDate) {
+    add(50, 'Forecasted go-live date is missing');
+  } else {
+    if (until !== null && until < 0 && !['Go Live Completed', 'Closed', 'Live'].includes(status)) {
+      add(45, 'Forecasted go-live date is past due');
+    }
+    if (until !== null && until >= 0 && until <= 7) add(30, 'Go-live is within 7 days');
+    if (until !== null && until >= 8 && until <= 14) add(20, 'Go-live is within 14 days');
+    if (until !== null && until >= 15 && until <= 30) add(10, 'Go-live is within 30 days');
+  }
+
+  if (status === 'On Hold') add(25, 'Project is on hold');
+  if (status === 'Onboarding' && until !== null && until <= 14) add(15, 'Onboarding project is near go-live');
+  if (status === 'Implementation' && until !== null && until <= 21) add(10, 'Implementation project is near go-live');
+  if (status === 'Testing & UAT' && until !== null && until <= 14) add(10, 'Testing project is near go-live');
+  if (getEffectiveIC(project.primaryIC, project.secondaryIC) === 'Unassigned') add(10, 'Primary and secondary IC are missing');
+  if (!clean(project.stationName)) add(5, 'Station is missing');
+  if (!clean(project.integrationType)) add(5, 'Integration type is missing');
+  if (!clean(project.templateName)) add(5, 'Template is missing');
+  if (hasBlocker(project.comment)) add(15, 'Comment includes a blocking keyword');
+  if (status === 'Customer Signed Off') add(-10, 'Customer has signed off');
+  if (status === 'Awaiting Go-Live') add(-10, 'Project is awaiting go-live');
+
+  const clamped = Math.max(0, Math.min(100, score));
+  return {
+    score: clamped,
+    label: classifyHealth(clamped),
+    reasons,
+    modelVersion: 'forecast-risk-v1'
+  };
+}
+
 export function calculateRiskScore(project, now = new Date()) {
   let score = 0;
   const reasons = [];
@@ -124,6 +168,7 @@ export function calculateRiskScore(project, now = new Date()) {
 
 export function forecastProject(project, now = new Date()) {
   const risk = calculateRiskScore(project, now);
+  const forecastRisk = evaluateForecastRisk(project, now);
   const forecastedDate = project.estimatedGoLiveDate || project.currentPlannedGoLiveDate || null;
   const status = clean(project.projectStatus);
   const blocker = hasBlocker(project.comment);
@@ -139,6 +184,10 @@ export function forecastProject(project, now = new Date()) {
       riskScore: risk.score,
       healthStatus: risk.healthStatus,
       riskReasons: risk.reasons,
+      forecastRiskScore: forecastRisk.score,
+      forecastRiskLabel: forecastRisk.label,
+      forecastRiskReasons: forecastRisk.reasons,
+      forecastRiskModelVersion: forecastRisk.modelVersion,
       recommendedActions: ['Add a valid forecasted go-live date'],
       forecastModelVersion: 'rules-v1',
       calculatedAt: new Date().toISOString(),
@@ -182,6 +231,10 @@ export function forecastProject(project, now = new Date()) {
     riskScore: risk.score,
     healthStatus: risk.healthStatus,
     riskReasons: risk.reasons,
+    forecastRiskScore: forecastRisk.score,
+    forecastRiskLabel: forecastRisk.label,
+    forecastRiskReasons: forecastRisk.reasons,
+    forecastRiskModelVersion: forecastRisk.modelVersion,
     recommendedActions: [...new Set(actions)],
     forecastModelVersion: 'rules-v1',
     calculatedAt: new Date().toISOString(),
@@ -200,6 +253,10 @@ export function enrichProject(project, now = new Date()) {
     riskScore: forecast.riskScore,
     healthStatus: forecast.healthStatus,
     riskReasons: forecast.riskReasons,
+    forecastRiskScore: forecast.forecastRiskScore,
+    forecastRiskLabel: forecast.forecastRiskLabel,
+    forecastRiskReasons: forecast.forecastRiskReasons,
+    forecastRiskModelVersion: forecast.forecastRiskModelVersion,
     recommendedActions: forecast.recommendedActions,
     forecastExplanation: forecast.explanation,
     forecastModelVersion: forecast.forecastModelVersion,

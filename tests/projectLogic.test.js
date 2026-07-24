@@ -57,6 +57,20 @@ test('forecast marks past go-live dates as delayed', () => {
   assert.ok(forecast.riskReasons.includes('Forecasted go-live date is past due'));
 });
 
+test('forecast exposes a dedicated risk model', () => {
+  const forecast = forecastProject({
+    projectStatus: 'Testing & UAT',
+    primaryIC: 'Navin',
+    estimatedGoLiveDate: '2026-07-18',
+    stationName: 'Implementation & Development',
+    integrationType: 'Core Templates'
+  }, new Date('2026-07-16T00:00:00Z'));
+  assert.equal(forecast.forecastRiskModelVersion, 'forecast-risk-v1');
+  assert.equal(typeof forecast.forecastRiskScore, 'number');
+  assert.ok(Array.isArray(forecast.forecastRiskReasons));
+  assert.equal(typeof forecast.forecastRiskLabel, 'string');
+});
+
 test('CSV normalization supports real headers and date parsing', () => {
   const result = normalizeCsvRows('Project,Customer,IC,Secondary IC,Estimated Go Live Date\nP,C,,Backup,07/31/2026\n', 'test.csv');
   assert.equal(result.errors.length, 0);

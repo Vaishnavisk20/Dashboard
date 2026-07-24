@@ -193,7 +193,8 @@ const projectColumns = [
 const projectTableColumns = [...projectColumns];
 const forecastColumns = [
   ...projectColumns,
-  { key: 'expectedDelayDays', label: 'Delay', render: (row) => (row.expectedDelayDays > 0 ? renderBadge(`${row.expectedDelayDays}d`) : renderDash(null)) }
+  { key: 'expectedDelayDays', label: 'Delay', render: (row) => (row.expectedDelayDays > 0 ? renderBadge(`${row.expectedDelayDays}d`) : renderDash(null)) },
+  { key: 'forecastRiskLabel', label: 'Risk', render: (row) => renderBadge(row.forecastRiskLabel || '-') }
 ];
 const customerColumns = [
   { key: 'customerName', label: 'Customer', render: (row) => `<button class="link-button customer-drilldown" data-customer="${escapeHtml(row.customerName)}" type="button">${escapeHtml(row.customerName)}</button>` },
@@ -623,7 +624,7 @@ async function openForecastDrawer(key, label) {
     return;
   }
   const payload = await api(`${forecastBasePath()}/projects?pageSize=200&category=${key}&${forecastTodayQuery()}`);
-  openDrawer(label, payload.data);
+  openDrawer(label, payload.data, { columns: forecastColumns });
 }
 
 function openDrawer(title, rows, options = {}) {
@@ -635,12 +636,13 @@ function openDrawer(title, rows, options = {}) {
   $('#drawer-kicker').textContent = `${rows.length} records`;
   syncDrawerBackButton();
   const isCustomerDrawer = Boolean(rows[0]?.customerRecord);
-  renderTable('#drawer-table', rows, isCustomerDrawer ? customerColumns : rows[0]?.activeProjects !== undefined ? [
+  const columns = options.columns || (isCustomerDrawer ? customerColumns : rows[0]?.activeProjects !== undefined ? [
     { key: 'effectiveIC', label: 'IC' },
     { key: 'activeProjects', label: 'Active' },
     { key: 'forecastedGoLives', label: 'Forecasted' },
     { key: 'capacityStatus', label: 'Capacity' }
-  ] : projectColumns, { key: 'drawer', afterRender: isCustomerDrawer ? attachCustomerDrilldowns : null });
+  ] : projectColumns);
+  renderTable('#drawer-table', rows, columns, { key: 'drawer', afterRender: isCustomerDrawer ? attachCustomerDrilldowns : null });
   $('#drawer').classList.add('open');
   $('#drawer').setAttribute('aria-hidden', 'false');
 }
