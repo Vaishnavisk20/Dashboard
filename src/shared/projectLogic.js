@@ -174,13 +174,11 @@ export function forecastProject(project, now = new Date()) {
   const blocker = hasBlocker(project.comment);
   const effectiveIC = getEffectiveIC(project.primaryIC, project.secondaryIC);
   const until = daysUntil(forecastedDate, now);
-  const expectedDelayDays = until !== null && until < 0 ? Math.abs(until) : 0;
   const actions = [];
 
   if (!forecastedDate) {
     return {
       forecastedGoLiveDate: null,
-      expectedDelayDays: 0,
       riskScore: risk.score,
       healthStatus: risk.healthStatus,
       riskReasons: risk.reasons,
@@ -216,18 +214,14 @@ export function forecastProject(project, now = new Date()) {
   if (!clean(project.stationName) || !clean(project.integrationType)) {
     actions.push('Complete missing station or integration information');
   }
-  if (expectedDelayDays > 0) {
-    actions.push(`Go-live is delayed by ${expectedDelayDays} day${expectedDelayDays === 1 ? '' : 's'}`);
-  }
 
   if (!actions.length) actions.push('Monitor project readiness and confirm go-live plan');
-  const explanation = expectedDelayDays > 0
-    ? `The forecasted go-live date is ${forecastedDate}, which is ${expectedDelayDays} day${expectedDelayDays === 1 ? '' : 's'} past today.`
+  const explanation = until !== null && until < 0
+    ? `The forecasted go-live date is ${forecastedDate}, which is past today.`
     : `The forecasted go-live date is ${forecastedDate}, sourced from the uploaded CSV.`;
 
   return {
     forecastedGoLiveDate: forecastedDate,
-    expectedDelayDays,
     riskScore: risk.score,
     healthStatus: risk.healthStatus,
     riskReasons: risk.reasons,
@@ -249,7 +243,6 @@ export function enrichProject(project, now = new Date()) {
     ...project,
     effectiveIC,
     forecastedGoLiveDate: forecast.forecastedGoLiveDate,
-    expectedDelayDays: forecast.expectedDelayDays,
     riskScore: forecast.riskScore,
     healthStatus: forecast.healthStatus,
     riskReasons: forecast.riskReasons,

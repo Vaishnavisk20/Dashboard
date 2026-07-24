@@ -40,7 +40,6 @@ test('forecast uses the uploaded CSV date as the forecasted go-live date', () =>
     stationName: 'Implementation & Development',
     integrationType: 'Core Templates'
   }, new Date('2026-07-20T00:00:00Z'));
-  assert.equal(forecast.expectedDelayDays, 0);
   assert.equal(forecast.forecastedGoLiveDate, '2026-07-31');
 });
 
@@ -52,7 +51,6 @@ test('forecast marks past go-live dates as delayed', () => {
     stationName: 'Implementation & Development',
     integrationType: 'Core Templates'
   }, new Date('2026-07-20T00:00:00Z'));
-  assert.equal(forecast.expectedDelayDays, 10);
   assert.match(forecast.explanation, /past today/);
   assert.ok(forecast.riskReasons.includes('Forecasted go-live date is past due'));
 });

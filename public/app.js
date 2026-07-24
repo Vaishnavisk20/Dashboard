@@ -193,7 +193,6 @@ const projectColumns = [
 const projectTableColumns = [...projectColumns];
 const forecastColumns = [
   ...projectColumns,
-  { key: 'expectedDelayDays', label: 'Delay', render: (row) => (row.expectedDelayDays > 0 ? renderBadge(`${row.expectedDelayDays}d`) : renderDash(null)) },
   { key: 'forecastRiskLabel', label: 'Risk', render: (row) => renderBadge(row.forecastRiskLabel || '-') }
 ];
 const customerColumns = [
