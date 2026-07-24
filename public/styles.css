@@ -1032,7 +1032,7 @@ tr:hover { background: #f3f7ff; }
   gap: 10px;
 }
 .badge { display: inline-block; padding: 4px 9px; border-radius: 999px; font-weight: 800; font-size: 11px; background: #f2f4f7; color: #475467; white-space: nowrap; }
-.badge.Critical, .badge.At-Risk, .badge.Closed { color: var(--risk); background: #fee4e2; }
+.badge.Critical, .badge.At-Risk, .badge.Delayed, .badge.Closed { color: var(--risk); background: #fee4e2; }
 .badge.Watch { color: var(--warn); background: #fef0c7; }
 .badge.On-Track { color: var(--accent); background: #eaf2ff; border: 1px solid #b9d7ff; }
 .badge.Platinum { color: var(--violet); background: #f4f3ff; border: 1px solid #d9d6fe; }

@@ -51,8 +51,9 @@ test('forecast marks past go-live dates as delayed', () => {
     stationName: 'Implementation & Development',
     integrationType: 'Core Templates'
   }, new Date('2026-07-20T00:00:00Z'));
+  assert.equal(forecast.forecastRiskLabel, 'Delayed');
   assert.match(forecast.explanation, /past today/);
-  assert.ok(forecast.riskReasons.includes('Forecasted go-live date is past due'));
+  assert.ok(forecast.forecastRiskReasons.includes('Forecasted go-live date is before today'));
 });
 
 test('forecast exposes a dedicated risk model', () => {
@@ -63,10 +64,9 @@ test('forecast exposes a dedicated risk model', () => {
     stationName: 'Implementation & Development',
     integrationType: 'Core Templates'
   }, new Date('2026-07-16T00:00:00Z'));
-  assert.equal(forecast.forecastRiskModelVersion, 'forecast-risk-v1');
-  assert.equal(typeof forecast.forecastRiskScore, 'number');
+  assert.equal(forecast.forecastRiskModelVersion, 'forecast-risk-date-v2');
+  assert.equal(forecast.forecastRiskLabel, 'At Risk');
   assert.ok(Array.isArray(forecast.forecastRiskReasons));
-  assert.equal(typeof forecast.forecastRiskLabel, 'string');
 });
 
 test('CSV normalization supports real headers and date parsing', () => {

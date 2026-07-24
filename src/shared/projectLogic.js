@@ -92,46 +92,21 @@ export function classifyHealth(score) {
 }
 
 function evaluateForecastRisk(project, now = new Date()) {
-  let score = 0;
   const reasons = [];
-  const status = clean(project.projectStatus);
   const forecastedDate = project.estimatedGoLiveDate || project.currentPlannedGoLiveDate;
   const until = daysUntil(forecastedDate, now);
+  const status = !forecastedDate ? 'Missing' : until < 0 ? 'Delayed' : until <= 7 ? 'At Risk' : 'On Track';
+  if (!forecastedDate) reasons.push('Forecasted go-live date is missing');
+  else if (until < 0) reasons.push('Forecasted go-live date is before today');
+  else if (until <= 7) reasons.push('Forecasted go-live date is within 7 days');
+  else reasons.push('Forecasted go-live date is more than 7 days away');
 
-  const add = (points, reason) => {
-    score += points;
-    reasons.push(reason);
-  };
-
-  if (!forecastedDate) {
-    add(50, 'Forecasted go-live date is missing');
-  } else {
-    if (until !== null && until < 0 && !['Go Live Completed', 'Closed', 'Live'].includes(status)) {
-      add(45, 'Forecasted go-live date is past due');
-    }
-    if (until !== null && until >= 0 && until <= 7) add(30, 'Go-live is within 7 days');
-    if (until !== null && until >= 8 && until <= 14) add(20, 'Go-live is within 14 days');
-    if (until !== null && until >= 15 && until <= 30) add(10, 'Go-live is within 30 days');
-  }
-
-  if (status === 'On Hold') add(25, 'Project is on hold');
-  if (status === 'Onboarding' && until !== null && until <= 14) add(15, 'Onboarding project is near go-live');
-  if (status === 'Implementation' && until !== null && until <= 21) add(10, 'Implementation project is near go-live');
-  if (status === 'Testing & UAT' && until !== null && until <= 14) add(10, 'Testing project is near go-live');
-  if (getEffectiveIC(project.primaryIC, project.secondaryIC) === 'Unassigned') add(10, 'Primary and secondary IC are missing');
-  if (!clean(project.stationName)) add(5, 'Station is missing');
-  if (!clean(project.integrationType)) add(5, 'Integration type is missing');
-  if (!clean(project.templateName)) add(5, 'Template is missing');
-  if (hasBlocker(project.comment)) add(15, 'Comment includes a blocking keyword');
-  if (status === 'Customer Signed Off') add(-10, 'Customer has signed off');
-  if (status === 'Awaiting Go-Live') add(-10, 'Project is awaiting go-live');
-
-  const clamped = Math.max(0, Math.min(100, score));
+  const score = !forecastedDate ? 0 : until < 0 ? 100 : until <= 7 ? 70 : 0;
   return {
-    score: clamped,
-    label: classifyHealth(clamped),
+    score,
+    label: status,
     reasons,
-    modelVersion: 'forecast-risk-v1'
+    modelVersion: 'forecast-risk-date-v2'
   };
 }
 
@@ -170,9 +145,6 @@ export function forecastProject(project, now = new Date()) {
   const risk = calculateRiskScore(project, now);
   const forecastRisk = evaluateForecastRisk(project, now);
   const forecastedDate = project.estimatedGoLiveDate || project.currentPlannedGoLiveDate || null;
-  const status = clean(project.projectStatus);
-  const blocker = hasBlocker(project.comment);
-  const effectiveIC = getEffectiveIC(project.primaryIC, project.secondaryIC);
   const until = daysUntil(forecastedDate, now);
   const actions = [];
 
@@ -193,32 +165,16 @@ export function forecastProject(project, now = new Date()) {
     };
   }
 
-  if (blocker) {
-    actions.push('Resolve the customer dependency or blocker');
-  }
-  if (status === 'Testing & UAT' && until !== null && until <= 7) {
-    actions.push('Confirm testing completion');
-  }
-  if (status === 'Implementation' && until !== null && until <= 14) {
-    actions.push('Confirm production readiness');
-  }
-  if (status === 'Onboarding' && until !== null && until <= 30) {
-    actions.push('Schedule customer UAT');
-  }
-  if (status === 'On Hold') {
-    actions.push('Escalate the on-hold reason');
-  }
-  if (effectiveIC === 'Unassigned') {
-    actions.push('Assign a primary or secondary IC');
-  }
-  if (!clean(project.stationName) || !clean(project.integrationType)) {
-    actions.push('Complete missing station or integration information');
-  }
+  if (forecastRisk.label === 'Delayed') actions.push('Confirm the revised go-live date');
+  if (forecastRisk.label === 'At Risk') actions.push('Review readiness before go-live');
+  if (forecastRisk.label === 'On Track') actions.push('Monitor the go-live plan');
 
   if (!actions.length) actions.push('Monitor project readiness and confirm go-live plan');
-  const explanation = until !== null && until < 0
+  const explanation = forecastRisk.label === 'Delayed'
     ? `The forecasted go-live date is ${forecastedDate}, which is past today.`
-    : `The forecasted go-live date is ${forecastedDate}, sourced from the uploaded CSV.`;
+    : forecastRisk.label === 'At Risk'
+      ? `The forecasted go-live date is ${forecastedDate}, which is within 7 days.`
+      : `The forecasted go-live date is ${forecastedDate}, sourced from the uploaded CSV.`;
 
   return {
     forecastedGoLiveDate: forecastedDate,
