@@ -190,15 +190,7 @@ const projectColumns = [
   { key: 'stationName', label: 'Station', render: (row) => renderDash(row.stationName) },
   { key: 'integrationType', label: 'Integration', render: (row) => renderText(row.integrationType) }
 ];
-const projectTableColumns = [
-  ...projectColumns,
-  { key: 'actions', label: 'Actions', render: (row) => `
-    <div class="row-actions">
-      <button class="icon-action" data-edit-portfolio="${escapeHtml(row.id)}" type="button" aria-label="Edit portfolio" title="Edit">✎</button>
-      <button class="icon-action danger-link" data-delete-portfolio="${escapeHtml(row.id)}" data-portfolio-name="${escapeHtml(row.projectName)}" type="button" aria-label="Delete portfolio" title="Delete">×</button>
-    </div>
-  ` }
-];
+const projectTableColumns = [...projectColumns];
 const forecastColumns = [
   ...projectColumns,
   { key: 'expectedDelayDays', label: 'Delay', render: (row) => (row.expectedDelayDays > 0 ? renderBadge(`${row.expectedDelayDays}d`) : renderDash(null)) }
@@ -464,36 +456,7 @@ function normalizeOverviewAttributeState() {
 
 async function loadProjects() {
   const payload = await api(`/api/projects?pageSize=200&${qs()}`);
-  const allProjects = await api('/api/projects?pageSize=200');
   renderTable('#projects-table', payload.data, projectTableColumns, { key: 'projects' });
-  document.querySelectorAll('[data-edit-portfolio]').forEach((button) => {
-    const row = payload.data.find((item) => item.id === button.dataset.editPortfolio);
-    button.addEventListener('click', () => openPortfolioForm(row));
-  });
-  document.querySelectorAll('[data-delete-portfolio]').forEach((button) => {
-    button.addEventListener('click', () => deletePortfolio(button.dataset.deletePortfolio, button.dataset.portfolioName));
-  });
-  const riskActions = $('#risk-actions');
-  if (riskActions) {
-    riskActions.innerHTML = allProjects.data
-      .filter((row) => row.recommendedActions?.length)
-      .slice(0, 20)
-      .map((row) => `
-        <button class="panel action-item" data-action-id="${escapeHtml(row.id)}" type="button">
-          <span class="action-topline">
-            <strong>${escapeHtml(row.projectName)}</strong>
-            <span class="badge ${normalizeBadge(row.healthStatus)}">${escapeHtml(row.healthStatus)}</span>
-          </span>
-          <span>${escapeHtml(row.customerName)} · IC: ${escapeHtml(row.effectiveIC)}</span>
-          <span>${escapeHtml(row.recommendedActions.join('; '))}</span>
-        </button>
-      `)
-      .join('') || '<article class="panel"><p class="muted">No recommended actions yet.</p></article>';
-    document.querySelectorAll('[data-action-id]').forEach((button) => {
-      const row = allProjects.data.find((item) => item.id === button.dataset.actionId);
-      button.addEventListener('click', () => openActionDetail(row));
-    });
-  }
 }
 
 function portfolioFormFields() {
@@ -678,39 +641,6 @@ function openDrawer(title, rows, options = {}) {
     { key: 'forecastedGoLives', label: 'Forecasted' },
     { key: 'capacityStatus', label: 'Capacity' }
   ] : projectColumns, { key: 'drawer', afterRender: isCustomerDrawer ? attachCustomerDrilldowns : null });
-  $('#drawer').classList.add('open');
-  $('#drawer').setAttribute('aria-hidden', 'false');
-}
-
-function openActionDetail(row) {
-  if (!row) return;
-  state.drawerRows = [row];
-  $('#drawer-title').textContent = 'Recommended Action';
-  $('#drawer-kicker').textContent = row.projectName;
-  const table = $('#drawer-table');
-  const wrap = table.closest('.table-wrap');
-  const existingPager = wrap?.nextElementSibling;
-  if (existingPager?.classList.contains('pagination-controls')) existingPager.remove();
-  const extraRows = Object.entries(row.extraFields || {})
-    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
-    .map(([key, value]) => `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(value)}</td></tr>`)
-    .join('');
-  table.innerHTML = `
-    <tbody class="detail-table">
-      <tr><th>Portfolio</th><td>${escapeHtml(row.projectName)}</td></tr>
-      <tr><th>Customer</th><td>${escapeHtml(row.customerName)}</td></tr>
-      <tr><th>Competency</th><td>${escapeHtml(row.competency)}</td></tr>
-      <tr><th>Status</th><td>${escapeHtml(row.projectStatus)}</td></tr>
-      <tr><th>IC</th><td>${escapeHtml(row.effectiveIC)}</td></tr>
-      <tr><th>Secondary IC</th><td>${escapeHtml(row.secondaryIC || '-')}</td></tr>
-      <tr><th>Forecasted Go-Live</th><td>${escapeHtml(row.estimatedGoLiveDate || '-')}</td></tr>
-      ${row.expectedDelayDays > 0 ? `<tr><th>Delay</th><td>${escapeHtml(row.expectedDelayDays)} days</td></tr>` : ''}
-      <tr><th>Recommended Actions</th><td>${escapeHtml((row.recommendedActions || []).join('; '))}</td></tr>
-      <tr><th>Forecast Explanation</th><td>${escapeHtml(row.forecastExplanation || '')}</td></tr>
-      <tr><th>Comment</th><td>${escapeHtml(row.comment || '-')}</td></tr>
-      ${extraRows ? `<tr class="detail-section"><th colspan="2">Additional CSV Fields</th></tr>${extraRows}` : ''}
-    </tbody>
-  `;
   $('#drawer').classList.add('open');
   $('#drawer').setAttribute('aria-hidden', 'false');
 }

@@ -1143,24 +1143,6 @@ tr:hover { background: #f3f7ff; }
 .full-field {
   grid-column: 1 / -1;
 }
-.action-list { display: grid; gap: 10px; }
-.action-item {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  border-left: 4px solid var(--warn);
-  text-align: left;
-}
-.action-item:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-.action-topline {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
 .detail-table th {
   position: static;
   width: 190px;
