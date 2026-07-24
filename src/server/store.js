@@ -153,34 +153,52 @@ export async function getProjects() {
 
 export async function getRawProjects() {
   if (USE_SUPABASE) {
-    const projects = await readSupabaseDocuments(PROJECTS_TABLE);
-    return projects.sort((a, b) => a.projectName.localeCompare(b.projectName));
+    try {
+      const projects = await readSupabaseDocuments(PROJECTS_TABLE);
+      return projects.sort((a, b) => String(a.projectName || '').localeCompare(String(b.projectName || '')));
+    } catch (error) {
+      if (error.code === 'DATABASE_UNAVAILABLE') return readJson(DB_PATH, []);
+      throw error;
+    }
   }
   return readJson(DB_PATH, []);
 }
 
 export async function saveProjects(projects) {
+  await writeJson(DB_PATH, projects);
   if (USE_SUPABASE) {
-    await replaceSupabaseDocuments(PROJECTS_TABLE, projects, mapProjectForSupabase);
+    try {
+      await replaceSupabaseDocuments(PROJECTS_TABLE, projects, mapProjectForSupabase);
+    } catch (error) {
+      if (error.code !== 'DATABASE_UNAVAILABLE') throw error;
+    }
     return;
   }
-  await writeJson(DB_PATH, projects);
 }
 
 export async function getImports() {
   if (USE_SUPABASE) {
-    const imports = await readSupabaseDocuments(IMPORTS_TABLE);
-    return imports.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    try {
+      const imports = await readSupabaseDocuments(IMPORTS_TABLE);
+      return imports.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    } catch (error) {
+      if (error.code === 'DATABASE_UNAVAILABLE') return readJson(IMPORTS_PATH, []);
+      throw error;
+    }
   }
   return readJson(IMPORTS_PATH, []);
 }
 
 export async function saveImports(imports) {
+  await writeJson(IMPORTS_PATH, imports);
   if (USE_SUPABASE) {
-    await replaceSupabaseDocuments(IMPORTS_TABLE, imports, mapImportForSupabase);
+    try {
+      await replaceSupabaseDocuments(IMPORTS_TABLE, imports, mapImportForSupabase);
+    } catch (error) {
+      if (error.code !== 'DATABASE_UNAVAILABLE') throw error;
+    }
     return;
   }
-  await writeJson(IMPORTS_PATH, imports);
 }
 
 export async function upsertImportedProjects(incoming, { mode = 'incremental', sourceFileName = 'upload.csv' } = {}) {
