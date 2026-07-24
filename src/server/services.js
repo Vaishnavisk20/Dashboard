@@ -328,7 +328,7 @@ export async function dataQuality(query) {
   return Object.entries(issueDefs).map(([key, predicate]) => ({ key, value: projects.filter(predicate).length }));
 }
 
-export async function createImportPreview({ filePath, csvText, fileName, mode = 'incremental' }) {
+export async function createImportPreview({ filePath, csvText, fileName, mode = 'full' }) {
   const sourceName = fileName || filePath?.split('/').pop() || 'uploaded-projects.csv';
   const text = csvText ?? await readFile(filePath, 'utf8');
   const normalized = normalizeCsvRows(text, sourceName);

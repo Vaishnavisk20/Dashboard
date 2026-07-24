@@ -141,7 +141,7 @@
         </div>
         <form id="import-form" class="import-panel">
           <label class="file-drop">CSV file<input id="import-file" type="file" accept=".csv,text/csv"></label>
-          <label>Mode<select id="import-mode"><option value="incremental">Incremental update</option><option value="full">Full replacement snapshot</option></select></label>
+          <label>Mode<select id="import-mode"><option value="full">Replace current data</option><option value="incremental">Merge with current data</option></select></label>
           <button type="submit">Preview Import</button>
           <button id="confirm-import" type="button" disabled>Confirm Import</button>
           <button id="reset-sample" class="secondary-button" type="button">Load Sample CSV</button>

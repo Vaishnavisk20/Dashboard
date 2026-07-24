@@ -126,7 +126,7 @@ data/imports/projects-filtered-20260715-1505.csv
 
 CSV data is only used for import/refresh. KPI cards, charts, project tables, capacity, data quality, and forecast views read from backend APIs backed by stored project records.
 
-In the app, use the Imports section to choose any customer CSV file from your machine, preview validation results, and then confirm the import. The frontend sends the uploaded CSV content to the backend; it does not hardcode project/customer records.
+In the app, use the Imports section to choose any customer CSV file from your machine, preview validation results, and then confirm the import. The default mode is **Replace current data**, so each uploaded customer CSV becomes the active dashboard dataset. Choose **Merge with current data** only when you intentionally want to keep existing records and update/add rows from the new file.
 
 The Imports section also includes:
 

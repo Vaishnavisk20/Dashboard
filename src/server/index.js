@@ -147,7 +147,7 @@ async function routeApi(req, res, url) {
       filePath: body.filePath,
       csvText: body.csvText,
       fileName: body.fileName,
-      mode: body.mode || 'incremental'
+      mode: body.mode || 'full'
     }));
   }
   const confirmMatch = url.pathname.match(/^\/api\/imports\/([^/]+)\/confirm$/);
