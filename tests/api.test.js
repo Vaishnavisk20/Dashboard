@@ -83,7 +83,8 @@ test('forecast range delayed count only uses records inside the selected range',
   const forecast = await forecastForRange('2026-07-16', '2026-12-31');
   const delayed = forecast.kpis.find((kpi) => kpi.key === 'delayed');
   const today = localTodayIso();
-  const delayedRows = forecast.projects.filter((project) => project.estimatedGoLiveDate < today && !['Go Live Completed', 'Closed', 'Live'].includes(project.projectStatus));
+  const allProjects = await listProjects({ pageSize: 200 });
+  const delayedRows = allProjects.data.filter((project) => project.estimatedGoLiveDate < today && !['Go Live Completed', 'Closed', 'Live'].includes(project.projectStatus));
   assert.equal(delayed.value, delayedRows.length);
   assert.ok(forecast.projects.every((project) => project.estimatedGoLiveDate >= '2026-07-16' && project.estimatedGoLiveDate <= '2026-12-31'));
 });
