@@ -891,14 +891,6 @@ function wireEvents() {
     $('#import-result').textContent = JSON.stringify(payload.data, null, 2);
     await refreshAll();
   });
-  $('#reset-sample').addEventListener('click', async () => {
-    if (!confirm('Load the sample CSV data again? Use this only when you want demo data back.')) return;
-    const payload = await api('/api/projects/reset-seed', { method: 'POST' });
-    $('#import-result').textContent = JSON.stringify(payload.data, null, 2);
-    state.filters = {};
-    syncFilterInputs();
-    await refreshAll();
-  });
   $('#settings-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     saveSettings({

@@ -131,7 +131,6 @@ In the app, use the Imports section to choose any customer CSV file from your ma
 The Imports section also includes:
 
 - Clear Data: removes all stored project records so the workspace is ready for a new customer file.
-- Load Sample CSV: restores the bundled sample data for demos or testing only.
 
 ## Routes
 
