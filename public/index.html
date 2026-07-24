@@ -180,7 +180,10 @@
     <aside id="drawer" class="drawer" aria-hidden="true">
       <div class="drawer-header">
         <div><p class="eyebrow" id="drawer-kicker">Details</p><h2 id="drawer-title">Portfolios</h2></div>
-        <button id="drawer-close" aria-label="Close drawer" type="button">Close</button>
+        <div class="drawer-actions">
+          <button id="drawer-back" class="secondary-button" type="button" hidden>Back</button>
+          <button id="drawer-close" aria-label="Close drawer" type="button">Close</button>
+        </div>
       </div>
       <input id="drawer-search" type="search" placeholder="Search drawer records">
       <div class="table-wrap"><table id="drawer-table"></table></div>

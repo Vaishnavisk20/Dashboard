@@ -1065,6 +1065,15 @@ tr:hover { background: #f3f7ff; }
 }
 .drawer.open { transform: translateX(0); }
 .drawer-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-actions button {
+  min-height: 36px;
+  padding: 7px 11px;
+}
 #drawer-search { margin-bottom: 12px; }
 .ic-drawer-summary {
   display: grid;

@@ -33,6 +33,7 @@ const state = {
   forecastTo: new URLSearchParams(location.search).get('to') || addMonthsIso(todayIso(), 6),
   forecastTab: 'all',
   drawerRows: [],
+  drawerBack: null,
   tablePages: {},
   settings: loadSettings(),
   currentImportId: null,
@@ -512,6 +513,12 @@ function closeDrawer() {
   $('#drawer').classList.remove('open');
   $('#drawer').setAttribute('aria-hidden', 'true');
   $('#drawer').querySelector('.ic-drawer-summary')?.remove();
+  state.drawerBack = null;
+  syncDrawerBackButton();
+}
+
+function syncDrawerBackButton() {
+  $('#drawer-back').hidden = !state.drawerBack;
 }
 
 function portfolioPayload() {
@@ -586,7 +593,9 @@ async function openIcDrawer(effectiveIC) {
 
 function openIcDetailDrawer(effectiveIC, rows, summary = {}) {
   state.drawerRows = rows;
+  state.drawerBack = null;
   state.tablePages.drawer = 1;
+  syncDrawerBackButton();
   $('#drawer-title').textContent = effectiveIC;
   $('#drawer-kicker').textContent = `${rows.length} portfolios`;
   const table = $('#drawer-table');
@@ -627,7 +636,11 @@ function attachCustomerDrilldowns() {
       const customer = button.dataset.customer;
       const params = new URLSearchParams({ customer, pageSize: '200' });
       const payload = await api(`/api/projects?${params.toString()}`);
-      openDrawer(`${customer} portfolios`, payload.data);
+      state.drawerBack = {
+        title: $('#drawer-title').textContent,
+        rows: state.drawerRows
+      };
+      openDrawer(`${customer} portfolios`, payload.data, { keepBack: true });
     });
   });
 }
@@ -642,12 +655,14 @@ async function openForecastDrawer(key, label) {
   openDrawer(label, payload.data);
 }
 
-function openDrawer(title, rows) {
+function openDrawer(title, rows, options = {}) {
   state.drawerRows = rows;
   state.tablePages.drawer = 1;
+  if (!options.keepBack) state.drawerBack = null;
   $('#drawer').querySelector('.ic-drawer-summary')?.remove();
   $('#drawer-title').textContent = title;
   $('#drawer-kicker').textContent = `${rows.length} records`;
+  syncDrawerBackButton();
   const isCustomerDrawer = Boolean(rows[0]?.customerRecord);
   renderTable('#drawer-table', rows, isCustomerDrawer ? customerColumns : rows[0]?.activeProjects !== undefined ? [
     { key: 'effectiveIC', label: 'IC' },
@@ -849,6 +864,12 @@ function wireEvents() {
     downloadCsv(payload.data, 'filtered-projects.csv');
   });
   $('#drawer-close').addEventListener('click', closeDrawer);
+  $('#drawer-back').addEventListener('click', () => {
+    if (!state.drawerBack) return;
+    const previous = state.drawerBack;
+    state.drawerBack = null;
+    openDrawer(previous.title, previous.rows);
+  });
   $('#drawer-search').addEventListener('input', () => {
     const term = $('#drawer-search').value.toLowerCase();
     openDrawer($('#drawer-title').textContent, state.drawerRows.filter((row) => JSON.stringify(row).toLowerCase().includes(term)));
