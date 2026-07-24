@@ -138,6 +138,7 @@ function renderTable(target, rows, columns, options = {}) {
   table.innerHTML = `<thead><tr><th class="index-col">#</th>${columns.map((c) => `<th>${c.label}</th>`).join('')}</tr></thead><tbody>${
     visibleRows.map((row, rowIndex) => `<tr><td class="index-col">${start + rowIndex + 1}</td>${columns.map((c) => `<td>${c.render ? c.render(row) : escapeHtml(row[c.key] || '')}</td>`).join('')}</tr>`).join('')
   }</tbody>`;
+  options.afterRender?.();
 }
 
 function renderPagination(target, tableKey, totalRows, currentPage, totalPages, pageSize, rerender) {
@@ -192,7 +193,7 @@ const projectTableColumns = [
   ` }
 ];
 const customerColumns = [
-  { key: 'customerName', label: 'Customer' },
+  { key: 'customerName', label: 'Customer', render: (row) => `<button class="link-button customer-drilldown" data-customer="${escapeHtml(row.customerName)}" type="button">${escapeHtml(row.customerName)}</button>` },
   { key: 'portfolioCount', label: 'Portfolios' },
   { key: 'activeProjects', label: 'Active' },
   { key: 'onHoldProjects', label: 'On Hold' },
@@ -620,6 +621,17 @@ async function openKpiDrawer(key, label) {
   openDrawer(label, payload.data);
 }
 
+function attachCustomerDrilldowns() {
+  document.querySelectorAll('[data-customer]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const customer = button.dataset.customer;
+      const params = new URLSearchParams({ customer, pageSize: '200' });
+      const payload = await api(`/api/projects?${params.toString()}`);
+      openDrawer(`${customer} portfolios`, payload.data);
+    });
+  });
+}
+
 async function openForecastDrawer(key, label) {
   if (key === 'capacity-status') {
     const payload = await api('/api/capacity');
@@ -636,12 +648,13 @@ function openDrawer(title, rows) {
   $('#drawer').querySelector('.ic-drawer-summary')?.remove();
   $('#drawer-title').textContent = title;
   $('#drawer-kicker').textContent = `${rows.length} records`;
-  renderTable('#drawer-table', rows, rows[0]?.customerRecord ? customerColumns : rows[0]?.activeProjects !== undefined ? [
+  const isCustomerDrawer = Boolean(rows[0]?.customerRecord);
+  renderTable('#drawer-table', rows, isCustomerDrawer ? customerColumns : rows[0]?.activeProjects !== undefined ? [
     { key: 'effectiveIC', label: 'IC' },
     { key: 'activeProjects', label: 'Active' },
     { key: 'forecastedGoLives', label: 'Forecasted' },
     { key: 'capacityStatus', label: 'Capacity' }
-  ] : projectColumns, { key: 'drawer' });
+  ] : projectColumns, { key: 'drawer', afterRender: isCustomerDrawer ? attachCustomerDrilldowns : null });
   $('#drawer').classList.add('open');
   $('#drawer').setAttribute('aria-hidden', 'false');
 }
