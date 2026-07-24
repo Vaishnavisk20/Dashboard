@@ -75,8 +75,8 @@ export function differenceInDays(fromIso, toIso) {
 
 export function daysUntil(dateIso, now = new Date()) {
   if (!dateIso) return null;
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  return Math.round((new Date(`${dateIso}T00:00:00Z`) - today) / 86400000);
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return Math.round((new Date(`${dateIso}T00:00:00Z`) - new Date(`${today}T00:00:00Z`)) / 86400000);
 }
 
 export function hasBlocker(comment) {
@@ -107,6 +107,7 @@ export function calculateRiskScore(project, now = new Date()) {
   if (status === 'On Hold') add(40, 'Project is on hold');
   if (effectiveIC === 'Unassigned') add(25, 'Primary and secondary IC are missing');
   if (!forecastedDate) add(25, 'Forecasted go-live date is missing');
+  if (until !== null && until < 0 && !['Go Live Completed', 'Closed', 'Live'].includes(status)) add(30, 'Forecasted go-live date is past due');
   if (until !== null && until <= 7 && status === 'Onboarding') add(35, 'Onboarding project is within 7 days of go-live');
   if (until !== null && until <= 14 && status === 'Implementation') add(25, 'Implementation project is within 14 days of go-live');
   if (until !== null && until <= 7 && status === 'Testing & UAT') add(15, 'Testing project is within 7 days of go-live');
@@ -128,6 +129,7 @@ export function forecastProject(project, now = new Date()) {
   const blocker = hasBlocker(project.comment);
   const effectiveIC = getEffectiveIC(project.primaryIC, project.secondaryIC);
   const until = daysUntil(forecastedDate, now);
+  const expectedDelayDays = until !== null && until < 0 ? Math.abs(until) : 0;
   const actions = [];
 
   if (!forecastedDate) {
@@ -165,13 +167,18 @@ export function forecastProject(project, now = new Date()) {
   if (!clean(project.stationName) || !clean(project.integrationType)) {
     actions.push('Complete missing station or integration information');
   }
+  if (expectedDelayDays > 0) {
+    actions.push(`Go-live is delayed by ${expectedDelayDays} day${expectedDelayDays === 1 ? '' : 's'}`);
+  }
 
   if (!actions.length) actions.push('Monitor project readiness and confirm go-live plan');
-  const explanation = `The forecasted go-live date is ${forecastedDate}, sourced from the uploaded CSV.`;
+  const explanation = expectedDelayDays > 0
+    ? `The forecasted go-live date is ${forecastedDate}, which is ${expectedDelayDays} day${expectedDelayDays === 1 ? '' : 's'} past today.`
+    : `The forecasted go-live date is ${forecastedDate}, sourced from the uploaded CSV.`;
 
   return {
     forecastedGoLiveDate: forecastedDate,
-    expectedDelayDays: 0,
+    expectedDelayDays,
     riskScore: risk.score,
     healthStatus: risk.healthStatus,
     riskReasons: risk.reasons,

@@ -9,6 +9,13 @@ import {
 } from '../src/shared/projectLogic.js';
 import { normalizeCsvRows } from '../src/server/csvImport.js';
 
+function localTodayIso(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 test('IC falls back from primary to secondary to Unassigned', () => {
   assert.equal(getEffectiveIC('Rajat', 'Backup'), 'Rajat');
   assert.equal(getEffectiveIC(' ', 'Madhusudhan Jami'), 'Madhusudhan Jami');
@@ -35,6 +42,19 @@ test('forecast uses the uploaded CSV date as the forecasted go-live date', () =>
   }, new Date('2026-07-20T00:00:00Z'));
   assert.equal(forecast.expectedDelayDays, 0);
   assert.equal(forecast.forecastedGoLiveDate, '2026-07-31');
+});
+
+test('forecast marks past go-live dates as delayed', () => {
+  const forecast = forecastProject({
+    projectStatus: 'Implementation',
+    primaryIC: 'Navin',
+    estimatedGoLiveDate: '2026-07-10',
+    stationName: 'Implementation & Development',
+    integrationType: 'Core Templates'
+  }, new Date('2026-07-20T00:00:00Z'));
+  assert.equal(forecast.expectedDelayDays, 10);
+  assert.match(forecast.explanation, /past today/);
+  assert.ok(forecast.riskReasons.includes('Forecasted go-live date is past due'));
 });
 
 test('CSV normalization supports real headers and date parsing', () => {

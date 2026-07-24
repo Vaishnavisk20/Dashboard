@@ -199,6 +199,10 @@ const projectTableColumns = [
     </div>
   ` }
 ];
+const forecastColumns = [
+  ...projectColumns,
+  { key: 'expectedDelayDays', label: 'Delay', render: (row) => (row.expectedDelayDays > 0 ? renderBadge(`${row.expectedDelayDays}d`) : renderDash(null)) }
+];
 const customerColumns = [
   { key: 'customerName', label: 'Customer', render: (row) => `<button class="link-button customer-drilldown" data-customer="${escapeHtml(row.customerName)}" type="button">${escapeHtml(row.customerName)}</button>` },
   { key: 'portfolioCount', label: 'Portfolios' },
@@ -557,7 +561,7 @@ async function loadForecast() {
   syncForecastControls();
   $('#forecast-from').value = state.forecastFrom;
   $('#forecast-to').value = state.forecastTo;
-  const payload = await api(forecastBasePath());
+  const payload = await api(`${forecastBasePath()}?${forecastTodayQuery()}`);
   $('#forecast-kpis').innerHTML = payload.data.kpis.map((kpi) => `
     <button class="kpi-card" data-forecast-kpi="${kpi.key}" type="button"><span>${escapeHtml(kpi.label)}</span><strong>${escapeHtml(kpi.value)}</strong><span>Selected range</span></button>
   `).join('');
@@ -567,10 +571,8 @@ async function loadForecast() {
 
 async function loadForecastTable() {
   const category = state.forecastTab === 'all' ? '' : `&category=${state.forecastTab}`;
-  const payload = await api(`${forecastBasePath()}/projects?pageSize=200${category}`);
-  renderTable('#forecast-table', payload.data, [
-    ...projectColumns
-  ], { key: 'forecast' });
+  const payload = await api(`${forecastBasePath()}/projects?pageSize=200${category}&${forecastTodayQuery()}`);
+  renderTable('#forecast-table', payload.data, forecastColumns, { key: 'forecast' });
 }
 
 async function loadCapacity() {
@@ -657,7 +659,7 @@ async function openForecastDrawer(key, label) {
     openDrawer(label, payload.data);
     return;
   }
-  const payload = await api(`${forecastBasePath()}/projects?pageSize=200&category=${key}`);
+  const payload = await api(`${forecastBasePath()}/projects?pageSize=200&category=${key}&${forecastTodayQuery()}`);
   openDrawer(label, payload.data);
 }
 
@@ -702,6 +704,7 @@ function openActionDetail(row) {
       <tr><th>IC</th><td>${escapeHtml(row.effectiveIC)}</td></tr>
       <tr><th>Secondary IC</th><td>${escapeHtml(row.secondaryIC || '-')}</td></tr>
       <tr><th>Forecasted Go-Live</th><td>${escapeHtml(row.estimatedGoLiveDate || '-')}</td></tr>
+      ${row.expectedDelayDays > 0 ? `<tr><th>Delay</th><td>${escapeHtml(row.expectedDelayDays)} days</td></tr>` : ''}
       <tr><th>Recommended Actions</th><td>${escapeHtml((row.recommendedActions || []).join('; '))}</td></tr>
       <tr><th>Forecast Explanation</th><td>${escapeHtml(row.forecastExplanation || '')}</td></tr>
       <tr><th>Comment</th><td>${escapeHtml(row.comment || '-')}</td></tr>
@@ -743,6 +746,10 @@ function renderActiveFilters() {
 
 function forecastBasePath() {
   return `/api/forecasts/range/${state.forecastFrom}/${state.forecastTo}`;
+}
+
+function forecastTodayQuery() {
+  return `today=${todayIso()}`;
 }
 
 function syncForecastControls() {

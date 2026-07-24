@@ -7,14 +7,25 @@ import { capacityStatus, clean, createProjectKey, getEffectiveIC, parseDate } fr
 const ACTIVE_PORTFOLIO_STATUSES = new Set(['Implementation', 'Onboarding', 'Testing & UAT', 'Awaiting Go-Live']);
 const DONE_STATUSES = new Set(['Go Live Completed', 'Closed', 'Live']);
 
+function localTodayIso(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function queryTodayIso(query, now = new Date()) {
+  return clean(query.today) || localTodayIso(now);
+}
+
 function isActivePortfolio(project) {
   return project.isActive !== false && ACTIVE_PORTFOLIO_STATUSES.has(project.projectStatus);
 }
 
-function isDelayedForecast(project, now = new Date()) {
-  const today = now.toISOString().slice(0, 10);
+function isDelayedForecast(project, today = new Date()) {
+  const todayIso = typeof today === 'string' ? clean(today) : localTodayIso(today);
   return Boolean(project.estimatedGoLiveDate)
-    && project.estimatedGoLiveDate < today
+    && project.estimatedGoLiveDate < todayIso
     && !DONE_STATUSES.has(project.projectStatus);
 }
 
@@ -214,25 +225,25 @@ export async function goLiveTrend(field, query) {
 
 export async function forecastForDate(date, query = {}) {
   const relevant = applyFilters(await getProjects(), query).filter((project) => project.estimatedGoLiveDate === date);
-  return buildForecastResponse(date, relevant, (project) => project.estimatedGoLiveDate === date);
+  return buildForecastResponse(date, relevant, (project) => project.estimatedGoLiveDate === date, queryTodayIso(query));
 }
 
 export async function forecastForMonth(month, query = {}) {
   const isMonth = (date) => clean(date).startsWith(`${month}-`);
   const relevant = applyFilters(await getProjects(), query).filter((project) => isMonth(project.estimatedGoLiveDate));
-  return buildForecastResponse(month, relevant, (project) => isMonth(project.estimatedGoLiveDate));
+  return buildForecastResponse(month, relevant, (project) => isMonth(project.estimatedGoLiveDate), queryTodayIso(query));
 }
 
 export async function forecastForRange(fromDate, toDate, query = {}) {
   const inRange = (date) => clean(date) >= fromDate && clean(date) <= toDate;
   const relevant = applyFilters(await getProjects(), query).filter((project) => inRange(project.estimatedGoLiveDate));
-  return buildForecastResponse(`${fromDate} to ${toDate}`, relevant, (project) => inRange(project.estimatedGoLiveDate));
+  return buildForecastResponse(`${fromDate} to ${toDate}`, relevant, (project) => inRange(project.estimatedGoLiveDate), queryTodayIso(query));
 }
 
-function buildForecastResponse(period, relevant, isForecasted) {
+function buildForecastResponse(period, relevant, isForecasted, todayIso) {
   const categories = {
     forecasted: relevant.filter(isForecasted),
-    delayed: relevant.filter((project) => isDelayedForecast(project)),
+    delayed: relevant.filter((project) => isDelayedForecast(project, todayIso)),
     unassigned: relevant.filter((p) => p.effectiveIC === 'Unassigned')
   };
   return {
@@ -247,28 +258,28 @@ function buildForecastResponse(period, relevant, isForecasted) {
 
 export async function forecastProjects(date, category, query) {
   const forecast = await forecastForDate(date, query);
-  let projects = filterForecastCategory(forecast.projects, category);
+  let projects = filterForecastCategory(forecast.projects, category, queryTodayIso(query));
   return sortAndPage(projects, query);
 }
 
 export async function forecastProjectsForMonth(month, category, query) {
   const forecast = await forecastForMonth(month, query);
-  let projects = filterForecastCategory(forecast.projects, category);
+  let projects = filterForecastCategory(forecast.projects, category, queryTodayIso(query));
   return sortAndPage(projects, query);
 }
 
 export async function forecastProjectsForRange(fromDate, toDate, category, query) {
   const forecast = await forecastForRange(fromDate, toDate, query);
-  let projects = filterForecastCategory(forecast.projects, category);
+  let projects = filterForecastCategory(forecast.projects, category, queryTodayIso(query));
   if (category === 'forecasted') {
     projects = projects.filter((p) => clean(p.estimatedGoLiveDate) >= fromDate && clean(p.estimatedGoLiveDate) <= toDate);
   }
   return sortAndPage(projects, query);
 }
 
-function filterForecastCategory(projects, category) {
+function filterForecastCategory(projects, category, todayIso = localTodayIso()) {
   if (category === 'forecasted') projects = projects.filter((p) => p.estimatedGoLiveDate);
-  if (category === 'delayed') projects = projects.filter((p) => isDelayedForecast(p));
+  if (category === 'delayed') projects = projects.filter((p) => isDelayedForecast(p, todayIso));
   if (category === 'unassigned') projects = projects.filter((p) => p.effectiveIC === 'Unassigned');
   return projects;
 }

@@ -20,6 +20,13 @@ import {
   updateProject
 } from '../src/server/services.js';
 
+function localTodayIso(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 test('KPI count and detail records stay consistent', async () => {
   const kpis = await dashboardKpis({});
   const active = kpis.find((item) => item.key === 'active-projects');
@@ -75,7 +82,7 @@ test('forecast selected range returns categorized records', async () => {
 test('forecast range delayed count only uses records inside the selected range', async () => {
   const forecast = await forecastForRange('2026-07-16', '2026-12-31');
   const delayed = forecast.kpis.find((kpi) => kpi.key === 'delayed');
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localTodayIso();
   const delayedRows = forecast.projects.filter((project) => project.estimatedGoLiveDate < today && !['Go Live Completed', 'Closed', 'Live'].includes(project.projectStatus));
   assert.equal(delayed.value, delayedRows.length);
   assert.ok(forecast.projects.every((project) => project.estimatedGoLiveDate >= '2026-07-16' && project.estimatedGoLiveDate <= '2026-12-31'));
