@@ -413,7 +413,7 @@ export async function clearProjectData() {
 }
 
 export async function resetFromSeed() {
-  const filePath = 'data/imports/projects-filtered-20260715-1505.csv';
+  const filePath = new URL('../../data/imports/projects-filtered-20260715-1505.csv', import.meta.url).pathname;
   const job = await createImportPreview({ filePath, mode: 'full' });
   return confirmImport(job.id);
 }
